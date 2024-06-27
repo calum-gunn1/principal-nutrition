@@ -6,10 +6,12 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { auth } from "../services/firebase"; // Import the Firebase auth module
+import { onAuthStateChanged } from "firebase/auth";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -20,10 +22,17 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
+  const [user, setUser] = useState<any>(null); // Track authentication state
+
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      if (loaded) {
+        SplashScreen.hideAsync();
+      }
+    });
+
+    return () => unsubscribe();
   }, [loaded]);
 
   if (!loaded) {
@@ -33,12 +42,18 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="screens/class-details"
-          options={{ title: "Class Details" }}
-        />
-        <Stack.Screen name="+not-found" />
+        {!user ? (
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+        ) : (
+          <>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="screens/class-details"
+              options={{ title: "Class Details" }}
+            />
+            <Stack.Screen name="+not-found" />
+          </>
+        )}
       </Stack>
     </ThemeProvider>
   );
