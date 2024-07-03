@@ -23,7 +23,6 @@ export default function LoginScreen() {
 
   const handleRegister = async () => {
     try {
-      // Check if the invite code exists in Firestore
       const inviteCodeDoc = await getDoc(
         doc(firestore, "inviteCodes", inviteCode)
       );
@@ -31,11 +30,7 @@ export default function LoginScreen() {
         setError("Invalid invite code.");
         return;
       }
-
-      // Create the user with email and password
       await createUserWithEmailAndPassword(auth, email, password);
-
-      // Optionally, delete the invite code document to prevent reuse
       await deleteDoc(doc(firestore, "inviteCodes", inviteCode));
     } catch (error: any) {
       setError(error.message);
