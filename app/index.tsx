@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Button } from "react-native";
+import { StyleSheet, View, Button, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import ClassList from "@/components/ClassList";
 import { auth, firestore } from "@/services/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
 
 interface Class {
@@ -13,22 +13,35 @@ interface Class {
   date: string;
 }
 
-export default function HomeScreen() {
+const HomeScreen = () => {
   const [classes, setClasses] = useState<Class[]>([]);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [user, setUser] = useState<any>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("light"); // Added theme state
   const router = useRouter();
 
   useEffect(() => {
-    const fetchClasses = async () => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      if (user) {
+        fetchClasses();
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const fetchClasses = async () => {
+    try {
       const snapshot = await getDocs(collection(firestore, "classes"));
       const classesData = snapshot.docs.map(
         (doc) => ({ id: doc.id, ...doc.data() } as Class)
       );
       setClasses(classesData);
-    };
-
-    fetchClasses();
-  }, []);
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      Alert.alert("Error", "Failed to fetch classes. Please try again later.");
+    }
+  };
 
   const handleBookClass = (id: string) => {
     const selectedClass = classes.find((cls) => cls.id === id);
@@ -37,9 +50,23 @@ export default function HomeScreen() {
     }
   };
 
-  const handleLogout = () => {
-    auth.signOut();
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error("Error logging out:", error);
+      Alert.alert("Error", "Failed to log out. Please try again later.");
+    }
   };
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <Button title="Login" onPress={() => router.push("/login")} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -47,11 +74,11 @@ export default function HomeScreen() {
       <ClassList
         classes={classes}
         onBookClass={handleBookClass}
-        theme={theme}
+        theme={theme} // Pass the theme prop
       />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -61,3 +88,5 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
 });
+
+export default HomeScreen;

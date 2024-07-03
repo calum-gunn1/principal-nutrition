@@ -7,7 +7,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 
-export default function LoginScreen() {
+const LoginScreen = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [inviteCode, setInviteCode] = useState<string>("");
@@ -65,7 +65,7 @@ export default function LoginScreen() {
       <Button title="Register" onPress={handleRegister} />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -91,3 +91,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+export default LoginScreen;
