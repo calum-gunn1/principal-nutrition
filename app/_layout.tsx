@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { auth } from "../services/firebase"; // Import the Firebase auth module
+import { auth } from "../services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -46,7 +46,7 @@ export default function RootLayout() {
           <Stack.Screen name="login" options={{ headerShown: false }} />
         ) : (
           <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen
               name="screens/class-details"
               options={{ title: "Class Details" }}
