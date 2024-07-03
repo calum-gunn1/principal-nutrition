@@ -1,92 +1,44 @@
-import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Button, Alert } from "react-native";
-import { useRouter } from "expo-router";
-import ClassList from "@/components/ClassList";
-import { auth, firestore } from "@/services/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, getDocs } from "firebase/firestore";
+import { Tabs } from "expo-router";
+import React from "react";
 
-interface Class {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-}
+import { TabBarIcon } from "@/components/navigation/TabBarIcon";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
-const HomeScreen = () => {
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [user, setUser] = useState<any>(null);
-  const [theme, setTheme] = useState<"light" | "dark">("light"); // Added theme state
-  const router = useRouter();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      if (user) {
-        fetchClasses();
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const fetchClasses = async () => {
-    try {
-      const snapshot = await getDocs(collection(firestore, "classes"));
-      const classesData = snapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Class)
-      );
-      setClasses(classesData);
-    } catch (error) {
-      console.error("Error fetching classes:", error);
-      Alert.alert("Error", "Failed to fetch classes. Please try again later.");
-    }
-  };
-
-  const handleBookClass = (id: string) => {
-    const selectedClass = classes.find((cls) => cls.id === id);
-    if (selectedClass) {
-      router.push(`/screens/class-details?classType=${selectedClass.title}`);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-    } catch (error) {
-      console.error("Error logging out:", error);
-      Alert.alert("Error", "Failed to log out. Please try again later.");
-    }
-  };
-
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <Button title="Login" onPress={() => router.push("/login")} />
-      </View>
-    );
-  }
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
 
   return (
-    <View style={styles.container}>
-      <Button title="Logout" onPress={handleLogout} />
-      <ClassList
-        classes={classes}
-        onBookClass={handleBookClass}
-        theme={theme} // Pass the theme prop
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        headerShown: false,
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "home" : "home-outline"}
+              color={color}
+            />
+          ),
+        }}
       />
-    </View>
+      <Tabs.Screen
+        name="book"
+        options={{
+          title: "Book",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "code-slash" : "code-slash-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+    </Tabs>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 50,
-  },
-});
-
-export default HomeScreen;
+}

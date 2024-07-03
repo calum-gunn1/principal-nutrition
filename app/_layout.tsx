@@ -1,28 +1,17 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { useFonts } from "expo-font";
+import React, { useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
-import "react-native-reanimated";
-
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { auth } from "../services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useFonts } from "expo-font";
+import { auth } from "../services/firebase";
+import CustomLayout from "@/components/CustomLayout";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
-
   const [user, setUser] = useState<any>(null); // Track authentication state
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -32,6 +21,9 @@ export default function RootLayout() {
       }
     });
 
+    // Simulate font loading
+    setTimeout(() => setLoaded(true), 1000);
+
     return () => unsubscribe();
   }, [loaded]);
 
@@ -40,7 +32,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <CustomLayout>
       <Stack>
         {!user ? (
           <Stack.Screen name="login" options={{ headerShown: false }} />
@@ -55,6 +47,6 @@ export default function RootLayout() {
           </>
         )}
       </Stack>
-    </ThemeProvider>
+    </CustomLayout>
   );
 }

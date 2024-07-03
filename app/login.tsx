@@ -1,21 +1,26 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text } from "react-native";
-import { auth, firestore } from "../services/firebase";
+import { useRouter } from "expo-router";
+import { auth } from "../services/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [inviteCode, setInviteCode] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const colorScheme = useColorScheme() ?? "light"; // Provide a default value
+  const theme = Colors[colorScheme];
+  const router = useRouter();
 
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      router.replace("/(tabs)");
     } catch (error: any) {
       setError(error.message);
     }
@@ -23,46 +28,59 @@ const LoginScreen = () => {
 
   const handleRegister = async () => {
     try {
-      const inviteCodeDoc = await getDoc(
-        doc(firestore, "inviteCodes", inviteCode)
-      );
-      if (!inviteCodeDoc.exists()) {
-        setError("Invalid invite code.");
-        return;
-      }
       await createUserWithEmailAndPassword(auth, email, password);
-      await deleteDoc(doc(firestore, "inviteCodes", inviteCode));
+      router.replace("/(tabs)");
     } catch (error: any) {
       setError(error.message);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login / Register</Text>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.title, { color: theme.text }]}>
+        Login / Register
+      </Text>
+      {error ? (
+        <Text style={[styles.error, { color: theme.text }]}>{error}</Text>
+      ) : null}
+      <Text style={[styles.label, { color: theme.text }]}>Email</Text>
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          { backgroundColor: theme.inputBackground, color: theme.text },
+        ]}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
+        placeholderTextColor={theme.icon}
       />
+      <Text style={[styles.label, { color: theme.text }]}>Password</Text>
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          { backgroundColor: theme.inputBackground, color: theme.text },
+        ]}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        placeholderTextColor={theme.icon}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Invite Code"
-        value={inviteCode}
-        onChangeText={setInviteCode}
-      />
-      <Button title="Login" onPress={handleLogin} />
-      <Button title="Register" onPress={handleRegister} />
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Login"
+          onPress={handleLogin}
+          color={theme.buttonBackground}
+        />
+      </View>
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Register"
+          onPress={handleRegister}
+          color={theme.buttonBackground}
+        />
+      </View>
     </View>
   );
 };
@@ -78,17 +96,26 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: "center",
   },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
   input: {
     height: 40,
     borderColor: "gray",
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 16,
     paddingHorizontal: 8,
+    borderRadius: 8,
   },
   error: {
     color: "red",
     marginBottom: 12,
     textAlign: "center",
+  },
+  buttonContainer: {
+    marginTop: 10,
+    marginBottom: 10,
   },
 });
 
