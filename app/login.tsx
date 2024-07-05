@@ -1,25 +1,23 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text } from "react-native";
 import { useRouter } from "expo-router";
-import { auth } from "../services/firebase";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
+import { useSession } from "@/contexts/SessionContext";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [inviteCode, setInviteCode] = useState<string>(""); // Add invite code state
   const [error, setError] = useState<string>("");
-  const colorScheme = useColorScheme() ?? "light"; // Provide a default value
+  const { login, register } = useSession();
+  const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
   const router = useRouter();
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await login(email, password);
       router.replace("/(tabs)");
     } catch (error: any) {
       setError(error.message);
@@ -28,7 +26,7 @@ const LoginScreen = () => {
 
   const handleRegister = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      await register(email, password, inviteCode); // Pass invite code
       router.replace("/(tabs)");
     } catch (error: any) {
       setError(error.message);
@@ -65,6 +63,18 @@ const LoginScreen = () => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        placeholderTextColor={theme.icon}
+      />
+      <Text style={[styles.label, { color: theme.text }]}>Invite Code</Text>{" "}
+      {/* Add invite code input */}
+      <TextInput
+        style={[
+          styles.input,
+          { backgroundColor: theme.inputBackground, color: theme.text },
+        ]}
+        placeholder="Invite Code"
+        value={inviteCode}
+        onChangeText={setInviteCode}
         placeholderTextColor={theme.icon}
       />
       <View style={styles.buttonContainer}>

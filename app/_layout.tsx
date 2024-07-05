@@ -1,52 +1,60 @@
-import React, { useEffect, useState } from "react";
-import { Stack } from "expo-router";
+import React, { useEffect } from "react";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { onAuthStateChanged } from "firebase/auth";
 import { useFonts } from "expo-font";
-import { auth } from "../services/firebase";
-import CustomLayout from "@/components/CustomLayout";
+import { SessionProvider, useSession } from "@/contexts/SessionContext";
+import { useNavigation } from "@react-navigation/native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const [user, setUser] = useState<any>(null); // Track authentication state
-  const [loaded, setLoaded] = useState(false);
+function RootLayout() {
+  const { user, loading } = useSession();
+  const [fontsLoaded] = useFonts({
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+  });
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      if (loaded) {
-        SplashScreen.hideAsync();
+    if (fontsLoaded && !loading) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, loading]);
+
+  useEffect(() => {
+    if (!loading) {
+      const inAuthGroup = segments[0] === "(auth)";
+      if (!user && !inAuthGroup) {
+        router.replace("/login");
+      } else if (user && inAuthGroup) {
+        router.replace("/(tabs)");
       }
-    });
+    }
+  }, [user, loading, segments]);
 
-    // Simulate font loading
-    setTimeout(() => setLoaded(true), 1000);
-
-    return () => unsubscribe();
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
+  if (!fontsLoaded || loading) {
+    return null; // You can replace this with a loading screen component if desired
   }
 
   return (
-    <CustomLayout>
-      <Stack>
-        {!user ? (
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-        ) : (
-          <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="screens/class-details"
-              options={{ title: "Class Details" }}
-            />
-            <Stack.Screen name="+not-found" />
-          </>
-        )}
-      </Stack>
-    </CustomLayout>
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="screens/class-details"
+        options={{ title: "Class Details" }}
+      />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  );
+}
+
+// Wrap your entire application with SessionProvider
+export default function App() {
+  return (
+    <SessionProvider>
+      <RootLayout />
+    </SessionProvider>
   );
 }

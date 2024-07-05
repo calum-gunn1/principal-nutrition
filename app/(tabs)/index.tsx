@@ -86,7 +86,7 @@ const HomeScreen = () => {
       <ClassList
         classes={classes}
         onBookClass={handleBookClass}
-        theme={colorScheme}
+        theme={colorScheme} // Pass the theme prop
       />
     </View>
   );
